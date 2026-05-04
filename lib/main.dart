@@ -7,6 +7,9 @@ import 'viewReportsPage.dart';
 import 'selectDatePage.dart';
 import 'reportResultsPage.dart';
 
+import 'compare_reports.dart';
+import 'comparison_results_screen.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -30,15 +33,18 @@ class MyApp extends StatelessWidget {
             builder: (context) => ReportResultsPage(selectedDate: args),
           );
         }
+
         return null;
       },
       routes: {
-        '/': (context) =>  SplashScreen(),
-        '/login': (context) =>  LoginPage(),
-        '/home': (context) =>  HomePage(),
+        '/': (context) => SplashScreen(),
+        '/login': (context) => LoginPage(),
+        '/home': (context) => HomePage(),
         '/createReport': (context) => const CreateReportPage(),
         '/viewReports': (context) => const ViewReportsPage(),
         '/selectDate': (context) => const SelectDatePage(),
+        '/reports/compare': (_) => const CompareReportsScreen(),
+        '/reports/comparison-results': (_) => const ComparisonResultsScreen(),
       },
     );
   }
