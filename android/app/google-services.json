@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "775959999284",
+    "project_id": "brochette-3da65",
+    "storage_bucket": "brochette-3da65.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:775959999284:android:ae552832ad0089279eeb61",
+        "android_client_info": {
+          "package_name": "com.example.sysdevfinalproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtDV0lphm17347g4zzo8y8k5WU5pc5Bns"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
