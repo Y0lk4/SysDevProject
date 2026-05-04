@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'splashScreen.dart';
 import 'loginPage.dart';
 import 'homePage.dart';
+import 'createReportPage.dart';
+import 'viewReportsPage.dart';
+import 'selectDatePage.dart';
+import 'reportResultsPage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,10 +23,22 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       initialRoute: '/',
+      onGenerateRoute: (settings) {
+        if (settings.name == '/reportResults') {
+          final args = settings.arguments as DateTime;
+          return MaterialPageRoute(
+            builder: (context) => ReportResultsPage(selectedDate: args),
+          );
+        }
+        return null;
+      },
       routes: {
         '/': (context) =>  SplashScreen(),
         '/login': (context) =>  LoginPage(),
         '/home': (context) =>  HomePage(),
+        '/createReport': (context) => const CreateReportPage(),
+        '/viewReports': (context) => const ViewReportsPage(),
+        '/selectDate': (context) => const SelectDatePage(),
       },
     );
   }

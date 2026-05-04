@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -70,10 +77,10 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Compact Calendar with accurate dates and no mock data
+                  // Compact Calendar
                   _buildCalendar(now),
                   const SizedBox(height: 20),
-                  _buildActionButtons(),
+                  _buildActionButtons(context),
                   const SizedBox(height: 25),
                   Center(
                     child: Text(
@@ -98,7 +105,15 @@ class HomePage extends StatelessWidget {
         ),
         child: SafeArea(
           child: BottomNavigationBar(
-            currentIndex: 0,
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              if (index == _currentIndex) return;
+              if (index == 1) {
+                Navigator.pushNamed(context, '/createReport');
+              } else if (index == 2) {
+                Navigator.pushNamed(context, '/viewReports');
+              }
+            },
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.white,
             selectedItemColor: const Color(0xFFE30613),
@@ -218,19 +233,25 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context) {
     return Column(
       children: [
-        _buildButton(
-          color: const Color(0xFFE30613),
-          title: 'Create Report',
-          subtitle: 'Enter today\'s financial data',
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/createReport'),
+          child: _buildButton(
+            color: const Color(0xFFE30613),
+            title: 'Create Report',
+            subtitle: 'Enter today\'s financial data',
+          ),
         ),
         const SizedBox(height: 10),
-        _buildButton(
-          color: const Color(0xFF1D2733),
-          title: 'View Reports',
-          subtitle: 'Browse and compare past reports',
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/viewReports'),
+          child: _buildButton(
+            color: const Color(0xFF1D2733),
+            title: 'View Reports',
+            subtitle: 'Browse and compare past reports',
+          ),
         ),
       ],
     );
@@ -256,6 +277,11 @@ class HomePage extends StatelessWidget {
             decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
+            ),
+            child: Icon(
+              title == 'Create Report' ? Icons.add : Icons.bar_chart,
+              color: color,
+              size: 20,
             ),
           ),
           const SizedBox(width: 12),
