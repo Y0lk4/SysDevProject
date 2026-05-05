@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'Exports_stuff/ExcelExport.dart';
+import 'Exports_stuff/PdfExport.dart';
+
 
 class ComparisonResultsScreen extends StatefulWidget {
   const ComparisonResultsScreen({super.key});
@@ -149,6 +153,67 @@ class _ComparisonResultsScreenState extends State<ComparisonResultsScreen> {
         '$higherTx had $txDiff more transaction${txDiff != 1 ? 's' : ''} than $lowerTx.';
   }
 
+  void _showExportOptions(BuildContext context) {
+
+    String dateStr = "${DateFormat('yyyy-MM-dd').format(_date1)}_vs_${DateFormat('yyyy-MM-dd').format(_date2)}";
+
+    final Map<String, dynamic> combinedData = {
+      'report1': _report1,
+      'report2': _report2,
+      'date1': _fmtDisplay(_date1),
+      'date2': _fmtDisplay(_date2),
+      'isComparison': true,
+    };
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Export Report',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 15),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFE8F5E9),
+                  child: Icon(Icons.table_chart, color: Colors.green),
+                ),
+                title: const Text('Excel (.xlsx)', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Best for data and spreadsheets'),
+                onTap: () {
+                  Navigator.pop(context);
+                  ExcelExport.exportReport(combinedData, dateStr);
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFFEBEE),
+                  child: Icon(Icons.picture_as_pdf, color: Colors.red),
+                ),
+                title: const Text('PDF (.pdf)', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Best for printing and viewing'),
+                onTap: () {
+                  Navigator.pop(context);
+                  PdfExport.exportReport(combinedData, dateStr, comparison: true);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -296,7 +361,7 @@ class _ComparisonResultsScreenState extends State<ComparisonResultsScreen> {
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              onPressed: _exportComparison,
+              onPressed: () => _showExportOptions(context),
               icon: const Icon(Icons.download, color: Colors.white),
               label: const Text(
                 'Export Comparison',
@@ -340,14 +405,6 @@ class _ComparisonResultsScreenState extends State<ComparisonResultsScreen> {
     );
   }
 
-  void _exportComparison() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Export triggered — connect to your export logic.'),
-        backgroundColor: Color(0xFFE30613),
-      ),
-    );
-  }
 }
 
 class _DateLabel extends StatelessWidget {

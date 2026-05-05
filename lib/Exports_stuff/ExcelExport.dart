@@ -42,9 +42,9 @@ class ExcelExport {
     sheet.getRangeByName('A1:F2').autoFit(); //clean up ts
 
     final List<int> bytes = workbook.saveAsStream();
-    workbook.dispose();
 
-    final output = await getTemporaryDirectory();
+    // final output = await getTemporaryDirectory();
+    final output = await getApplicationDocumentsDirectory();
     final file = File('${output.path}/report_$date.xlsx');
     await file.writeAsBytes(bytes);
     await OpenFilex.open(file.path);
