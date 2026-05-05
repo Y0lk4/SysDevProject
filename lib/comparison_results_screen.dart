@@ -3,20 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ComparisonResultsScreen extends StatefulWidget {
   const ComparisonResultsScreen({super.key});
-
-  /// Register this in your MaterialApp routes:
-  ///
-  ///   routes: {
-  ///     '/reports/compare':            (_) => const CompareReportsScreen(),
-  ///     '/reports/comparison-results': (_) => const ComparisonResultsScreen(),
-  ///   }
-  ///
-  /// Navigate to it with:
-  ///   Navigator.pushNamed(
-  ///     context,
-  ///     '/reports/comparison-results',
-  ///     arguments: {'date1': DateTime(...), 'date2': DateTime(...)},
-  ///   );
   static const routeName = '/reports/comparison-results';
 
   @override

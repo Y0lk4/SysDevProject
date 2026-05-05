@@ -190,9 +190,8 @@ class _CalendarCardState extends State<_CalendarCard> {
   List<DateTime?> _buildDays() {
     final first = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
     final last = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
-    // Sunday = 0
     final startPad = first.weekday % 7;
-    final List<DateTime?> days = List.filled(startPad, null);
+    final List<DateTime?> days = List.filled(startPad, null, growable: true);
     for (int i = 1; i <= last.day; i++) {
       days.add(DateTime(_focusedMonth.year, _focusedMonth.month, i));
     }
