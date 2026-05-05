@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'splashScreen.dart';
 import 'loginPage.dart';
 import 'homePage.dart';
@@ -10,8 +12,17 @@ import 'reportResultsPage.dart';
 import 'compare_reports.dart';
 import 'comparison_results_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: "AIzaSyBtDV0lphm17347g4zzo8y8k5WU5pc5Bns",
+      appId: "775959999284",
+      messagingSenderId: "1:775959999284:android:ae552832ad0089279eeb61",
+      projectId: "brochette-3da65",
+    ),
+  );
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
