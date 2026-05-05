@@ -84,10 +84,17 @@ class _CreateReportPageState extends State<CreateReportPage> {
           );
           Navigator.pop(context);
         }
+      } on FirebaseException catch (e) {
+        // Specifically handle Firebase errors by accessing the message string
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Firebase Error: ${e.message}')),
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error saving report: $e')),
+            SnackBar(content: Text('Error saving report: ${e.toString()}')),
           );
         }
       }

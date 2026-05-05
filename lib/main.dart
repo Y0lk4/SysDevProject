@@ -6,8 +6,14 @@ import 'createReportPage.dart';
 import 'viewReportsPage.dart';
 import 'selectDatePage.dart';
 import 'reportResultsPage.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
+
   runApp(const MyApp());
 }
 
