@@ -67,7 +67,10 @@ class _CreateReportPageState extends State<CreateReportPage> {
   Future<void> _saveReport() async {
     if (_formKey.currentState!.validate()) {
       try {
-        await FirebaseFirestore.instance.collection('reports').add({
+        // We use the date string as the unique ID so the calendar can find it
+        String docId = _dateController.text;
+
+        await FirebaseFirestore.instance.collection('reports').doc(docId).set({
           'date': _dateController.text,
           'cash': double.tryParse(_cashController.text) ?? 0.0,
           'tips': double.tryParse(_tipsController.text) ?? 0.0,
@@ -92,10 +95,11 @@ class _CreateReportPageState extends State<CreateReportPage> {
           );
         }
       } catch (e) {
+        // This is the 'catch' block the error was asking for
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error saving report: ${e.toString()}')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error saving report: $e')));
         }
       }
     }
@@ -118,9 +122,7 @@ class _CreateReportPageState extends State<CreateReportPage> {
         ),
         centerTitle: true,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(20),
-          ),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
         ),
       ),
       body: SingleChildScrollView(
@@ -135,7 +137,10 @@ class _CreateReportPageState extends State<CreateReportPage> {
                 controller: _dateController,
                 readOnly: true,
                 onTap: () => _selectDate(context),
-                decoration: _inputDecoration(Icons.calendar_today_outlined, 'yyyy-mm-dd'),
+                decoration: _inputDecoration(
+                  Icons.calendar_today_outlined,
+                  'yyyy-mm-dd',
+                ),
               ),
               const SizedBox(height: 16),
               _buildLabel('Cash'),
@@ -207,10 +212,7 @@ class _CreateReportPageState extends State<CreateReportPage> {
                   ),
                   child: const Text(
                     'Cancel',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                 ),
               ),
@@ -236,12 +238,19 @@ class _CreateReportPageState extends State<CreateReportPage> {
     );
   }
 
-  InputDecoration _inputDecoration(IconData icon, String hint, {String? prefix}) {
+  InputDecoration _inputDecoration(
+    IconData icon,
+    String hint, {
+    String? prefix,
+  }) {
     return InputDecoration(
       prefixIcon: prefix != null
           ? Padding(
               padding: const EdgeInsets.all(12.0),
-              child: Text(prefix, style: const TextStyle(fontSize: 18, color: Colors.grey)),
+              child: Text(
+                prefix,
+                style: const TextStyle(fontSize: 18, color: Colors.grey),
+              ),
             )
           : Icon(icon, color: Colors.grey, size: 20),
       hintText: hint,

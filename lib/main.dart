@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'splashScreen.dart';
 import 'loginPage.dart';
 import 'homePage.dart';
@@ -14,7 +16,20 @@ void main() async{
 
   await Firebase.initializeApp();
 
-  runApp(const MyApp());
+import 'compare_reports.dart';
+import 'comparison_results_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: "AIzaSyBtDV0lphm17347g4zzo8y8k5WU5pc5Bns",
+      appId: "775959999284",
+      messagingSenderId: "1:775959999284:android:ae552832ad0089279eeb61",
+      projectId: "brochette-3da65",
+    ),
+  );
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -36,15 +51,18 @@ class MyApp extends StatelessWidget {
             builder: (context) => ReportResultsPage(selectedDate: args),
           );
         }
+
         return null;
       },
       routes: {
-        '/': (context) =>  SplashScreen(),
-        '/login': (context) =>  LoginPage(),
-        '/home': (context) =>  HomePage(),
+        '/': (context) => SplashScreen(),
+        '/login': (context) => LoginPage(),
+        '/home': (context) => HomePage(),
         '/createReport': (context) => const CreateReportPage(),
         '/viewReports': (context) => const ViewReportsPage(),
         '/selectDate': (context) => const SelectDatePage(),
+        '/reports/compare': (_) => const CompareReportsScreen(),
+        '/reports/comparison-results': (_) => const ComparisonResultsScreen(),
       },
     );
   }

@@ -27,9 +27,7 @@ class _ViewReportsPageState extends State<ViewReportsPage> {
         ),
         centerTitle: true,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(20),
-          ),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
         ),
       ),
       body: Padding(
@@ -62,9 +60,7 @@ class _ViewReportsPageState extends State<ViewReportsPage> {
               icon: Icons.date_range_outlined,
               title: 'View by Date Range',
               subtitle: 'See totals across multiple days',
-              onTap: () {
-                // To be implemented
-              },
+              onTap: () {},
             ),
             const SizedBox(height: 16),
             _buildOptionCard(
@@ -73,7 +69,7 @@ class _ViewReportsPageState extends State<ViewReportsPage> {
               title: 'Compare Two Reports',
               subtitle: 'Compare two different dates side by side',
               onTap: () {
-                // To be implemented
+                Navigator.pushNamed(context, '/reports/compare');
               },
             ),
           ],
@@ -163,11 +159,7 @@ class _ViewReportsPageState extends State<ViewReportsPage> {
                 color: Color(0xFFFFEBEE),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                color: const Color(0xFFE30613),
-                size: 24,
-              ),
+              child: Icon(icon, color: const Color(0xFFE30613), size: 24),
             ),
             const SizedBox(width: 20),
             Expanded(
@@ -185,18 +177,12 @@ class _ViewReportsPageState extends State<ViewReportsPage> {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   ),
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFFE30613),
-            ),
+            const Icon(Icons.chevron_right, color: Color(0xFFE30613)),
           ],
         ),
       ),
