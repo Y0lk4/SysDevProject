@@ -11,6 +11,7 @@ class PdfExport {
     final pdf = pw.Document();
     final currency = NumberFormat.currency(symbol: r'$', decimalDigits: 2);
 
+
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -22,6 +23,7 @@ class PdfExport {
               pw.Text('Daily Sales Report',
               style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 10),
+              // color
               pw.Divider( thickness: 1, color: PdfColors.grey300),
               pw.SizedBox(height: 20),
 
@@ -35,6 +37,7 @@ class PdfExport {
               pw.Container(
                 padding: const pw.EdgeInsets.all(12),
                 decoration: const pw.BoxDecoration(
+                  // color
                   color: PdfColors.grey100,
                   borderRadius: pw.BorderRadius.all(pw.Radius.circular(8)),
                 ),
