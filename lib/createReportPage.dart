@@ -16,28 +16,51 @@ class _CreateReportPageState extends State<CreateReportPage> {
   final _tipsController = TextEditingController();
   final _taxController = TextEditingController();
   final _transactionsController = TextEditingController();
-
-  double _netSales = 0.0;
-  double _grossSales = 0.0;
+  final _netSalesController = TextEditingController();
+  final _grossSalesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _cashController.addListener(_calculateTotals);
-    _tipsController.addListener(_calculateTotals);
-    _taxController.addListener(_calculateTotals);
   }
 
-  void _calculateTotals() {
-    double cash = double.tryParse(_cashController.text) ?? 0.0;
-    double tips = double.tryParse(_tipsController.text) ?? 0.0;
-    double tax = double.tryParse(_taxController.text) ?? 0.0;
+  String? _validateNumericField(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'This field cannot be empty';
+    }
 
-    setState(() {
-      _netSales = cash; // Assuming Cash field is the net sales amount
-      _grossSales = cash + tips + tax;
-    });
+    // Try to parse as double
+    final parsed = double.tryParse(value);
+    if (parsed == null) {
+      return 'Please enter a valid number (no letters or special characters)';
+    }
+
+    // Check for negative values
+    if (parsed < 0) {
+      return 'Negative values are not allowed';
+    }
+
+    return null;
+  }
+
+  String? _validateIntegerField(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'This field cannot be empty';
+    }
+
+    // Try to parse as integer
+    final parsed = int.tryParse(value);
+    if (parsed == null) {
+      return 'Please enter a whole number (no decimals, letters, or special characters)';
+    }
+
+    // Check for negative values
+    if (parsed < 0) {
+      return 'Negative values are not allowed';
+    }
+
+    return null;
   }
 
   @override
@@ -47,6 +70,8 @@ class _CreateReportPageState extends State<CreateReportPage> {
     _tipsController.dispose();
     _taxController.dispose();
     _transactionsController.dispose();
+    _netSalesController.dispose();
+    _grossSalesController.dispose();
     super.dispose();
   }
 
@@ -55,18 +80,74 @@ class _CreateReportPageState extends State<CreateReportPage> {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      lastDate: DateTime.now(),
     );
     if (picked != null) {
+      // Check if the selected date is a Monday
+      if (picked.weekday == DateTime.monday) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot create reports on Mondays')),
+          );
+        }
+        return;
+      }
+      
+      // Check if the selected date is in the future
+      final now = DateTime.now();
+      if (picked.isAfter(DateTime(now.year, now.month, now.day))) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot create reports for future dates')),
+          );
+        }
+        return;
+      }
+      
       setState(() {
         _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
 
+  bool _isValidReportDate(DateTime date) {
+    // Check if the date is a Monday
+    if (date.weekday == DateTime.monday) {
+      return false;
+    }
+    
+    // Check if the date is in the future
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (date.isAfter(today)) {
+      return false;
+    }
+    
+    return true;
+  }
+
   Future<void> _saveReport() async {
     if (_formKey.currentState!.validate()) {
       try {
+        // Parse the date from the controller
+        DateTime selectedDate = DateFormat('yyyy-MM-dd').parse(_dateController.text);
+        
+        // Validate the date
+        if (!_isValidReportDate(selectedDate)) {
+          if (mounted) {
+            if (selectedDate.weekday == DateTime.monday) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Cannot create reports on Mondays')),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Cannot create reports for future dates')),
+              );
+            }
+          }
+          return;
+        }
+
         // We use the date string as the unique ID so the calendar can find it
         String docId = _dateController.text;
 
@@ -76,8 +157,8 @@ class _CreateReportPageState extends State<CreateReportPage> {
           'tips': double.tryParse(_tipsController.text) ?? 0.0,
           'salesTax': double.tryParse(_taxController.text) ?? 0.0,
           'transactions': int.tryParse(_transactionsController.text) ?? 0,
-          'netSales': _netSales,
-          'grossSales': _grossSales,
+          'netSales': double.tryParse(_netSalesController.text) ?? 0.0,
+          'grossSales': double.tryParse(_grossSalesController.text) ?? 0.0,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
@@ -146,22 +227,25 @@ class _CreateReportPageState extends State<CreateReportPage> {
               _buildLabel('Cash'),
               TextFormField(
                 controller: _cashController,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 decoration: _inputDecoration(Icons.attach_money, '0.00'),
+                validator: _validateNumericField,
               ),
               const SizedBox(height: 16),
               _buildLabel('Tips'),
               TextFormField(
                 controller: _tipsController,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 decoration: _inputDecoration(Icons.attach_money, '0.00'),
+                validator: _validateNumericField,
               ),
               const SizedBox(height: 16),
               _buildLabel('Sales Tax'),
               TextFormField(
                 controller: _taxController,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 decoration: _inputDecoration(Icons.attach_money, '0.00'),
+                validator: _validateNumericField,
               ),
               const SizedBox(height: 16),
               _buildLabel('Transactions'),
@@ -169,13 +253,24 @@ class _CreateReportPageState extends State<CreateReportPage> {
                 controller: _transactionsController,
                 keyboardType: TextInputType.number,
                 decoration: _inputDecoration(Icons.numbers, '0', prefix: '# '),
+                validator: _validateIntegerField,
               ),
               const SizedBox(height: 16),
-              _buildLabel('Net Sales (Auto-calculated)'),
-              _buildReadOnlyField(_netSales),
+              _buildLabel('Net Sales'),
+              TextFormField(
+                controller: _netSalesController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: _inputDecoration(Icons.attach_money, '0.00'),
+                validator: _validateNumericField,
+              ),
               const SizedBox(height: 16),
-              _buildLabel('Gross Sales (Auto-calculated)'),
-              _buildReadOnlyField(_grossSales),
+              _buildLabel('Gross Sales'),
+              TextFormField(
+                controller: _grossSalesController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: _inputDecoration(Icons.attach_money, '0.00'),
+                validator: _validateNumericField,
+              ),
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
@@ -268,25 +363,4 @@ class _CreateReportPageState extends State<CreateReportPage> {
     );
   }
 
-  Widget _buildReadOnlyField(double value) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.attach_money, color: Colors.grey, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            value.toStringAsFixed(2),
-            style: const TextStyle(fontSize: 16, color: Colors.black54),
-          ),
-        ],
-      ),
-    );
-  }
 }

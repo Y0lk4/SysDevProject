@@ -10,7 +10,24 @@ class SelectDatePage extends StatefulWidget {
 
 class _SelectDatePageState extends State<SelectDatePage> {
   DateTime? _selectedDate;
-  final DateTime _currentMonth = DateTime.now();
+  DateTime _currentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+
+  void _previousMonth() {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
+    });
+  }
+
+  void _nextMonth() {
+    final next = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
+    final now = DateTime.now();
+    final currentMonthStart = DateTime(now.year, now.month, 1);
+    if (!next.isAfter(currentMonthStart)) {
+      setState(() {
+        _currentMonth = next;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +53,12 @@ class _SelectDatePageState extends State<SelectDatePage> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
+          _buildMonthHeader(),
+          const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: _buildCalendar(_currentMonth),
+            child: _buildCalendar(),
           ),
           const Spacer(),
           Padding(
@@ -92,9 +111,39 @@ class _SelectDatePageState extends State<SelectDatePage> {
     );
   }
 
-  Widget _buildCalendar(DateTime date) {
-    final firstDayOfMonth = DateTime(date.year, date.month, 1);
-    final lastDayOfMonth = DateTime(date.year, date.month + 1, 0);
+  Widget _buildMonthHeader() {
+    final now = DateTime.now();
+    final currentMonthStart = DateTime(now.year, now.month, 1);
+    final isCurrentMonth = _currentMonth.year == now.year && _currentMonth.month == now.month;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left, size: 28),
+            onPressed: _previousMonth,
+          ),
+          Text(
+            DateFormat('MMMM yyyy').format(_currentMonth),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right, size: 28),
+            onPressed: isCurrentMonth ? null : _nextMonth,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendar() {
+    final firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    final lastDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
     int offset = firstDayOfMonth.weekday % 7;
 
@@ -120,23 +169,28 @@ class _SelectDatePageState extends State<SelectDatePage> {
     }
 
     for (int i = 1; i <= daysInMonth; i++) {
-      DateTime currentDay = DateTime(date.year, date.month, i);
+      DateTime currentDay = DateTime(_currentMonth.year, _currentMonth.month, i);
       bool isSelected = _selectedDate != null &&
           _selectedDate!.year == currentDay.year &&
           _selectedDate!.month == currentDay.month &&
           _selectedDate!.day == currentDay.day;
       
-      // Mock data from the image: 15, 20, 25, 29 are orange, 30 is red outlined
-      bool isOrange = [15, 20, 25, 29].contains(i);
-      bool isRedOutlined = i == 30;
+      bool isMonday = currentDay.weekday == DateTime.monday;
+      bool isFuture = currentDay.isAfter(DateTime.now());
+      bool isDisabled = isMonday || isFuture;
+      
+      bool isOrange = [15, 20, 25, 29].contains(i) && !isDisabled;
+      bool isRedOutlined = i == 30 && !isDisabled;
 
       dayWidgets.add(
         GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedDate = currentDay;
-            });
-          },
+          onTap: isDisabled
+              ? null
+              : () {
+                  setState(() {
+                    _selectedDate = currentDay;
+                  });
+                },
           child: Center(
             child: Container(
               width: 40,
@@ -144,17 +198,23 @@ class _SelectDatePageState extends State<SelectDatePage> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected 
-                    ? Colors.black
-                    : (isOrange ? Colors.orange : Colors.transparent),
-                border: isRedOutlined 
-                    ? Border.all(color: const Color(0xFFE30613), width: 1.5)
-                    : (isSelected ? Border.all(color: Colors.black, width: 1) : null),
+                color: isDisabled
+                    ? Colors.grey[300]
+                    : (isSelected 
+                        ? Colors.black
+                        : (isOrange ? Colors.orange : Colors.transparent)),
+                border: isDisabled
+                    ? null
+                    : (isRedOutlined 
+                        ? Border.all(color: const Color(0xFFE30613), width: 1.5)
+                        : (isSelected ? Border.all(color: Colors.black, width: 1) : null)),
               ),
               child: Text(
                 '$i',
                 style: TextStyle(
-                  color: (isSelected || isOrange) ? Colors.white : Colors.black87,
+                  color: isDisabled
+                      ? Colors.grey[500]
+                      : ((isSelected || isOrange) ? Colors.white : Colors.black87),
                   fontWeight: (isSelected || isOrange || isRedOutlined) ? FontWeight.bold : FontWeight.normal,
                   fontSize: 14,
                 ),

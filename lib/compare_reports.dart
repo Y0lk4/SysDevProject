@@ -399,7 +399,12 @@ class _BottomNav extends StatelessWidget {
             } else if (index == 2) {
               Navigator.pushReplacementNamed(context, '/reports');
             } else if (index == 3) {
-              Navigator.pushNamed(context, '/export');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Run a comparison first, then export'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             }
           },
           type: BottomNavigationBarType.fixed,

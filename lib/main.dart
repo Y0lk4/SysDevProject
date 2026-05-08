@@ -11,6 +11,7 @@ import 'reportResultsPage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'compare_reports.dart';
 import 'comparison_results_screen.dart';
+import 'dateRangeReportPage.dart';
 
 
 void main() async {
@@ -56,6 +57,7 @@ class MyApp extends StatelessWidget {
         '/selectDate': (context) => const SelectDatePage(),
         '/reports/compare': (_) => const CompareReportsScreen(),
         '/reports/comparison-results': (_) => const ComparisonResultsScreen(),
+        '/dateRangeReport': (context) => const DateRangeReportPage(),
       },
     );
   }

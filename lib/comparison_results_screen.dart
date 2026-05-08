@@ -154,64 +154,95 @@ class _ComparisonResultsScreenState extends State<ComparisonResultsScreen> {
   }
 
   void _showExportOptions(BuildContext context) {
+    try {
+      String dateStr = "${DateFormat('yyyy-MM-dd').format(_date1)}_vs_${DateFormat('yyyy-MM-dd').format(_date2)}";
 
-    String dateStr = "${DateFormat('yyyy-MM-dd').format(_date1)}_vs_${DateFormat('yyyy-MM-dd').format(_date2)}";
+      final Map<String, dynamic> combinedData = {
+        'report1': _report1,
+        'report2': _report2,
+        'date1': _fmtDisplay(_date1),
+        'date2': _fmtDisplay(_date2),
+        'isComparison': true,
+      };
 
-    final Map<String, dynamic> combinedData = {
-      'report1': _report1,
-      'report2': _report2,
-      'date1': _fmtDisplay(_date1),
-      'date2': _fmtDisplay(_date2),
-      'isComparison': true,
-    };
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Export Report',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 15),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFE8F5E9),
-                  child: Icon(Icons.table_chart, color: Colors.green),
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        builder: (context) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Export Report',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                title: const Text('Excel (.xlsx)', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Best for data and spreadsheets'),
-                onTap: () {
-                  Navigator.pop(context);
-                  ExcelExport.exportReport(combinedData, dateStr);
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFFFEBEE),
-                  child: Icon(Icons.picture_as_pdf, color: Colors.red),
+                const SizedBox(height: 15),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFE8F5E9),
+                    child: Icon(Icons.table_chart, color: Colors.green),
+                  ),
+                  title: const Text('Excel (.xlsx)', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Best for data and spreadsheets'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _exportComparisonToExcel(combinedData, dateStr);
+                  },
                 ),
-                title: const Text('PDF (.pdf)', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Best for printing and viewing'),
-                onTap: () {
-                  Navigator.pop(context);
-                  PdfExport.exportReport(combinedData, dateStr, comparison: true);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                const Divider(),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFFFEBEE),
+                    child: Icon(Icons.picture_as_pdf, color: Colors.red),
+                  ),
+                  title: const Text('PDF (.pdf)', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Best for printing and viewing'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _exportComparisonToPdf(combinedData, dateStr);
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  Future<void> _exportComparisonToExcel(Map<String, dynamic> data, String dateStr) async {
+    try {
+      await ExcelExport.exportReport(data, dateStr, comparison: true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comparison exported to Excel!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Excel export failed: $e')),
+      );
+    }
+  }
+
+  Future<void> _exportComparisonToPdf(Map<String, dynamic> data, String dateStr) async {
+    try {
+      await PdfExport.exportReport(data, dateStr, comparison: true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comparison exported to PDF!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF export failed: $e')),
+      );
+    }
   }
 
   @override
@@ -241,7 +272,10 @@ class _ComparisonResultsScreenState extends State<ComparisonResultsScreen> {
           : _error != null
           ? _buildError()
           : _buildResults(),
-      bottomNavigationBar: const _BottomNav(currentIndex: 2),
+      bottomNavigationBar: _BottomNav(
+        currentIndex: 2,
+        onExportTap: () => _showExportOptions(context),
+      ),
     );
   }
 
@@ -555,7 +589,8 @@ class _TotalsRow extends StatelessWidget {
 
 class _BottomNav extends StatelessWidget {
   final int currentIndex;
-  const _BottomNav({required this.currentIndex});
+  final VoidCallback? onExportTap;
+  const _BottomNav({required this.currentIndex, this.onExportTap});
 
   @override
   Widget build(BuildContext context) {
@@ -576,7 +611,7 @@ class _BottomNav extends StatelessWidget {
             } else if (index == 2) {
               Navigator.pushReplacementNamed(context, '/reports');
             } else if (index == 3) {
-              Navigator.pushNamed(context, '/export');
+              onExportTap?.call();
             }
           },
           type: BottomNavigationBarType.fixed,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -9,6 +10,73 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  DateTime _calendarMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+
+  void _previousMonth() {
+    setState(() {
+      _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month - 1, 1);
+    });
+  }
+
+  void _nextMonth() {
+    final next = DateTime(_calendarMonth.year, _calendarMonth.month + 1, 1);
+    final now = DateTime.now();
+    final currentMonthStart = DateTime(now.year, now.month, 1);
+    if (!next.isAfter(currentMonthStart)) {
+      setState(() {
+        _calendarMonth = next;
+      });
+    }
+  }
+
+  Future<void> _pickMonthYear() async {
+    final now = DateTime.now();
+    final currentMonth = _calendarMonth.month;
+    final currentYear = _calendarMonth.year;
+
+    final monthCtl = TextEditingController(text: currentMonth.toString());
+    final yearCtl = TextEditingController(text: currentYear.toString());
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Go to Month/Year'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: monthCtl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Month (1-12)'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: yearCtl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Year'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Go')),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      final m = int.tryParse(monthCtl.text);
+      final y = int.tryParse(yearCtl.text);
+      if (m != null && y != null && m >= 1 && m <= 12 && y >= 2020 && y <= now.year) {
+        final target = DateTime(y, m, 1);
+        if (!target.isAfter(DateTime(now.year, now.month, 1))) {
+          setState(() {
+            _calendarMonth = target;
+          });
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +87,6 @@ class _HomePageState extends State<HomePage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header - Moves with screen and has reduced top padding
             Container(
               width: double.infinity,
               decoration: const BoxDecoration(
@@ -77,8 +144,11 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  // Calendar navigation
+                  _buildCalendarNav(),
+                  const SizedBox(height: 10),
                   // Compact Calendar
-                  _buildCalendar(now),
+                  _buildCalendar(),
                   const SizedBox(height: 20),
                   _buildActionButtons(context),
                   const SizedBox(height: 25),
@@ -112,6 +182,13 @@ class _HomePageState extends State<HomePage> {
                 Navigator.pushNamed(context, '/createReport');
               } else if (index == 2) {
                 Navigator.pushNamed(context, '/viewReports');
+              } else if (index == 3) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Go to Reports to export your data'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
               }
             },
             type: BottomNavigationBarType.fixed,
@@ -169,9 +246,38 @@ class _HomePageState extends State<HomePage> {
     return '${months[lastReport.month - 1]} ${lastReport.day}, ${lastReport.year}';
   }
 
-  Widget _buildCalendar(DateTime now) {
-    final firstDayOfMonth = DateTime(now.year, now.month, 1);
-    final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+  Widget _buildCalendarNav() {
+    final now = DateTime.now();
+    final isCurrent = _calendarMonth.year == now.year && _calendarMonth.month == now.month;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.chevron_left, size: 22),
+          onPressed: _previousMonth,
+          constraints: const BoxConstraints(),
+          padding: EdgeInsets.zero,
+        ),
+        GestureDetector(
+          onTap: _pickMonthYear,
+          child: Text(
+            DateFormat('MMMM yyyy').format(_calendarMonth),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.chevron_right, size: 22),
+          onPressed: isCurrent ? null : _nextMonth,
+          constraints: const BoxConstraints(),
+          padding: EdgeInsets.zero,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCalendar() {
+    final firstDayOfMonth = DateTime(_calendarMonth.year, _calendarMonth.month, 1);
+    final lastDayOfMonth = DateTime(_calendarMonth.year, _calendarMonth.month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
     int offset = firstDayOfMonth.weekday % 7;
 
@@ -197,7 +303,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     for (int i = 1; i <= daysInMonth; i++) {
-      bool isToday = i == now.day;
+      bool isToday = i == DateTime.now().day && _calendarMonth.month == DateTime.now().month && _calendarMonth.year == DateTime.now().year;
 
       dayWidgets.add(
         Center(

@@ -60,7 +60,9 @@ class _ViewReportsPageState extends State<ViewReportsPage> {
               icon: Icons.date_range_outlined,
               title: 'View by Date Range',
               subtitle: 'See totals across multiple days',
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/dateRangeReport');
+              },
             ),
             const SizedBox(height: 16),
             _buildOptionCard(
@@ -90,7 +92,12 @@ class _ViewReportsPageState extends State<ViewReportsPage> {
               } else if (index == 1) {
                 Navigator.pushNamed(context, '/createReport');
               } else if (index == 3) {
-                // Export tab
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Select a report first, then export'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
               }
             },
             type: BottomNavigationBarType.fixed,

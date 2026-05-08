@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-import 'Exports_stuff/Pdfexport.dart';    // Replace with your actual filename
-import 'Exports_stuff/Excelexport.dart';
+import 'Exports_stuff/PdfExport.dart';
+import 'Exports_stuff/ExcelExport.dart';
 
 class ReportResultsPage extends StatefulWidget {
   final DateTime selectedDate;
@@ -17,67 +17,103 @@ class ReportResultsPage extends StatefulWidget {
 class _ReportResultsPageState extends State<ReportResultsPage> {
   bool _isLoading = true;
   Map<String, dynamic>? _reportData;
-  Map<String, dynamic> _overviewTotals = {
-    'cash': 0.0,
-    'tips': 0.0,
-    'salesTax': 0.0,
-    'transactions': 0,
-    'netSales': 0.0,
-    'grossSales': 0.0,
-  };
   int _currentIndex = 2; // Reports tab
 
   void _showExportOptions(BuildContext context) {
+    try {
+      String dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
 
-    String dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Export Report',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 15),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFE8F5E9),
-                  child: Icon(Icons.table_chart, color: Colors.green),
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        builder: (context) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Export Report',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                title: const Text('Excel (.xlsx)', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Best for data and spreadsheets'),
-                onTap: () {
-                  Navigator.pop(context);
-                  ExcelExport.exportReport(_reportData ?? {}, dateStr);
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFFFEBEE),
-                  child: Icon(Icons.picture_as_pdf, color: Colors.red),
+                const SizedBox(height: 15),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFE8F5E9),
+                    child: Icon(Icons.table_chart, color: Colors.green),
+                  ),
+                  title: const Text('Excel (.xlsx)', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Best for data and spreadsheets'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _exportToExcel(dateStr);
+                  },
                 ),
-                title: const Text('PDF (.pdf)', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Best for printing and viewing'),
-                onTap: () {
-                  Navigator.pop(context);
-                  PdfExport.exportReport(_reportData ?? {}, dateStr);
-                },
-              ),
-            ],
-          ),
+                const Divider(),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFFFEBEE),
+                    child: Icon(Icons.picture_as_pdf, color: Colors.red),
+                  ),
+                  title: const Text('PDF (.pdf)', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Best for printing and viewing'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _exportToPdf(dateStr);
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      debugPrint("Error showing export options: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
         );
-      },
-    );
+      }
+    }
+  }
+
+  Future<void> _exportToExcel(String dateStr) async {
+    try {
+      await ExcelExport.exportReport(_reportData ?? {}, dateStr);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Report exported to Excel!')),
+        );
+      }
+    } catch (e) {
+      debugPrint("Excel export error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Excel export failed: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportToPdf(String dateStr) async {
+    try {
+      await PdfExport.exportReport(_reportData ?? {}, dateStr);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Report exported to PDF!')),
+        );
+      }
+    } catch (e) {
+      debugPrint("PDF export error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF export failed: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -102,35 +138,7 @@ class _ReportResultsPageState extends State<ReportResultsPage> {
         _reportData = reportSnap.docs.first.data();
       }
 
-      // Fetch all reports to calculate Overview totals
-      var allReportsSnap = await FirebaseFirestore.instance.collection('reports').get();
-      
-      double totalCash = 0;
-      double totalTips = 0;
-      double totalTax = 0;
-      num totalTransactionsNum = 0;
-      double totalNetSales = 0;
-      double totalGrossSales = 0;
-
-      for (var doc in allReportsSnap.docs) {
-        var data = doc.data();
-        totalCash += (data['cash'] ?? 0.0).toDouble();
-        totalTips += (data['tips'] ?? 0.0).toDouble();
-        totalTax += (data['salesTax'] ?? 0.0).toDouble();
-        totalTransactionsNum += (data['transactions'] ?? 0);
-        totalNetSales += (data['netSales'] ?? 0.0).toDouble();
-        totalGrossSales += (data['grossSales'] ?? 0.0).toDouble();
-      }
-
       setState(() {
-        _overviewTotals = {
-          'cash': totalCash,
-          'tips': totalTips,
-          'salesTax': totalTax,
-          'transactions': totalTransactionsNum.toInt(),
-          'netSales': totalNetSales,
-          'grossSales': totalGrossSales,
-        };
         _isLoading = false;
       });
     } catch (e) {
@@ -180,8 +188,6 @@ class _ReportResultsPageState extends State<ReportResultsPage> {
                   ),
                   const SizedBox(height: 20),
                   _buildMainReportCard(currencyFormat),
-                  const SizedBox(height: 25),
-                  _buildOverviewCard(currencyFormat),
                   const SizedBox(height: 30),
                   _buildActionButtons(),
                   const SizedBox(height: 40),
@@ -205,7 +211,7 @@ class _ReportResultsPageState extends State<ReportResultsPage> {
               } else if (index == 2) {
                 Navigator.popUntil(context, (route) => route.settings.name == '/viewReports' || route.isFirst);
               } else if (index == 3) {
-                // Export tab
+                _showExportOptions(context);
               }
             },
             type: BottomNavigationBarType.fixed,
@@ -286,7 +292,7 @@ class _ReportResultsPageState extends State<ReportResultsPage> {
                   ),
                 ),
                 Text(
-                  currencyFormat.format(_overviewTotals['grossSales']),
+                  currencyFormat.format(_reportData?['grossSales'] ?? 0.0),
                   style: const TextStyle(
                     color: Colors.white, 
                     fontWeight: FontWeight.bold, 
@@ -323,53 +329,6 @@ class _ReportResultsPageState extends State<ReportResultsPage> {
             style: TextStyle(
               fontSize: 17,
               fontWeight: isBold ? FontWeight.bold : FontWeight.w400,
-              color: Colors.black,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOverviewCard(NumberFormat currencyFormat) {
-    return Container(
-      padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        children: [
-          _buildOverviewRow('Total Cash:', currencyFormat.format(_overviewTotals['cash'])),
-          _buildOverviewRow('Total Tips:', currencyFormat.format(_overviewTotals['tips'])),
-          _buildOverviewRow('Total Sales Tax:', currencyFormat.format(_overviewTotals['salesTax'])),
-          _buildOverviewRow('Total Transactions:', '${_overviewTotals['transactions']}'),
-          _buildOverviewRow('Total Net Sales:', currencyFormat.format(_overviewTotals['netSales']), isBold: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOverviewRow(String label, String value, {bool isBold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 15, 
-              color: Colors.blueGrey[400],
-              fontWeight: FontWeight.w400
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
